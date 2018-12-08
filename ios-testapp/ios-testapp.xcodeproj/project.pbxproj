@@ -8,7 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		1A1CE9D421BB606D003DEE3C /* DroppablePin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A1CE9D321BB606D003DEE3C /* DroppablePin.swift */; };
-		1A1CE9D621BB9437003DEE3C /* RestaurantCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A1CE9D521BB9437003DEE3C /* RestaurantCell.swift */; };
+		1A1CE9DA21BBA183003DEE3C /* RestaurantCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A1CE9D921BBA183003DEE3C /* RestaurantCell.swift */; };
 		1A53D9E821B9470300940C3B /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A53D9E721B9470300940C3B /* AppDelegate.swift */; };
 		1A53D9EA21B9470300940C3B /* MapVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A53D9E921B9470300940C3B /* MapVC.swift */; };
 		1A53D9ED21B9470300940C3B /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 1A53D9EB21B9470300940C3B /* Main.storyboard */; };
@@ -20,7 +20,7 @@
 
 /* Begin PBXFileReference section */
 		1A1CE9D321BB606D003DEE3C /* DroppablePin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DroppablePin.swift; sourceTree = "<group>"; };
-		1A1CE9D521BB9437003DEE3C /* RestaurantCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestaurantCell.swift; sourceTree = "<group>"; };
+		1A1CE9D921BBA183003DEE3C /* RestaurantCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestaurantCell.swift; sourceTree = "<group>"; };
 		1A53D9E421B9470300940C3B /* ios-testapp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "ios-testapp.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		1A53D9E721B9470300940C3B /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		1A53D9E921B9470300940C3B /* MapVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapVC.swift; sourceTree = "<group>"; };
@@ -63,8 +63,6 @@
 			isa = PBXGroup;
 			children = (
 				1AC7A40821B95BA900E393A3 /* Model */,
-				1A53D9FC21B9475300940C3B /* Utilities */,
-				1A53D9FB21B9474A00940C3B /* Extensions */,
 				1A53D9FA21B9474500940C3B /* View */,
 				1A53D9F921B9473500940C3B /* Controller */,
 				1A53D9E721B9470300940C3B /* AppDelegate.swift */,
@@ -89,23 +87,9 @@
 			children = (
 				1AC7A40B21B95ED400E393A3 /* RestaurantAnnotation.swift */,
 				1A1CE9D321BB606D003DEE3C /* DroppablePin.swift */,
-				1A1CE9D521BB9437003DEE3C /* RestaurantCell.swift */,
+				1A1CE9D921BBA183003DEE3C /* RestaurantCell.swift */,
 			);
 			path = View;
-			sourceTree = "<group>";
-		};
-		1A53D9FB21B9474A00940C3B /* Extensions */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = Extensions;
-			sourceTree = "<group>";
-		};
-		1A53D9FC21B9475300940C3B /* Utilities */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = Utilities;
 			sourceTree = "<group>";
 		};
 		1AC7A40821B95BA900E393A3 /* Model */ = {
@@ -187,7 +171,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				1A1CE9D621BB9437003DEE3C /* RestaurantCell.swift in Sources */,
+				1A1CE9DA21BBA183003DEE3C /* RestaurantCell.swift in Sources */,
 				1AC7A40C21B95ED400E393A3 /* RestaurantAnnotation.swift in Sources */,
 				1A53D9EA21B9470300940C3B /* MapVC.swift in Sources */,
 				1A1CE9D421BB606D003DEE3C /* DroppablePin.swift in Sources */,

@@ -1,5 +1,5 @@
 //
-//  ViewController.swift
+//  MapVC.swift
 //  ios-testapp
 //
 //  Created by Reden John Zarra on 06/12/2018.
@@ -28,7 +28,8 @@ class MapVC: UIViewController, UIGestureRecognizerDelegate {
     var progressLabel: UILabel?
     
     var flowLayout = UICollectionViewFlowLayout()
-    var collectionView: UICollectionView?
+    var tableView: UITableView?
+    var restaurantsArray = [Restaurant]()
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -37,17 +38,17 @@ class MapVC: UIViewController, UIGestureRecognizerDelegate {
         locationManager.delegate = self
         
         configureLocationServices()
+        addPinch()
         addDoubleTap()
         
-        collectionView = UICollectionView(frame: view.bounds, collectionViewLayout: flowLayout)
-        collectionView?.register(RestaurantCell.self, forCellWithReuseIdentifier: "restaurantCell")
-        collectionView?.delegate = self
-        collectionView?.dataSource = self
-        collectionView?.backgroundColor = #colorLiteral(red: 1, green: 0.5763723254, blue: 0, alpha: 0.6952299736)
-        
-        pullUpView.addSubview(collectionView!)
-        
         drawFromAndToRoute(from: "Narva, Estonia", to: "Tallinn, Estonia") //Draws the route from Narva, Estonia to Tallinn, Estonia when app has been loaded
+    }
+    
+    func addPinch() {
+        let pinch = UIPinchGestureRecognizer(target: self, action: #selector(zoomMapView(sender:)))
+        pinch.delegate = self
+        
+        mapView.addGestureRecognizer(pinch)
     }
     
     /// Adds a double tap gesture recognizer on the mapview
@@ -94,7 +95,7 @@ class MapVC: UIViewController, UIGestureRecognizerDelegate {
         spinner?.style = .whiteLarge
         spinner?.color = #colorLiteral(red: 0.2549019754, green: 0.2745098174, blue: 0.3019607961, alpha: 1)
         spinner?.startAnimating()
-        collectionView?.addSubview(spinner!)
+        pullUpView.addSubview(spinner!)
     }
     
     func removeSpinner() {
@@ -110,12 +111,27 @@ class MapVC: UIViewController, UIGestureRecognizerDelegate {
         progressLabel?.textColor = #colorLiteral(red: 0.2549019754, green: 0.2745098174, blue: 0.3019607961, alpha: 1)
         progressLabel?.textAlignment = .center
         progressLabel?.text = "Fetching restaurants"
-        collectionView?.addSubview(progressLabel!)
+        pullUpView.addSubview(progressLabel!)
     }
     
     func removeProgressLabel() {
         if progressLabel != nil {
             progressLabel?.removeFromSuperview()
+        }
+    }
+    
+    func addTableView() {
+        tableView = UITableView(frame: CGRect(x: 0, y: 20, width: pullUpView.frame.width, height: pullUpView.frame.height - 20))
+        tableView?.register(RestaurantCell.self, forCellReuseIdentifier: "restaurantCell")
+        tableView?.delegate = self
+        tableView?.dataSource = self
+        
+        pullUpView.addSubview(tableView!)
+    }
+    
+    func removeTableView() {
+        if tableView != nil {
+            tableView?.removeFromSuperview()
         }
     }
     
@@ -132,12 +148,12 @@ extension MapVC: MKMapViewDelegate {
     /// Centers the map on the device's location
     func centerMapOnUserLocation() {
         guard let coordinate = locationManager.location?.coordinate else { return }
-        centerMapOnLocationAndSearchRestaurantsNearby(coordinate: coordinate)
+        centerMapOnLocation(coordinate: coordinate)
     }
     
     func centerMapOnSelectedUserLocation() {
         if(selectedUserCoordinate != nil){
-            centerMapOnLocationAndSearchRestaurantsNearby(coordinate: selectedUserCoordinate!)
+            centerMapOnLocation(coordinate: selectedUserCoordinate!)
         } else {
             print("No selected coordinate yet")
         }
@@ -146,12 +162,10 @@ extension MapVC: MKMapViewDelegate {
     /// Centers the map on the provided coordinate, zooms in based on the defined radius, and search nearby restaurants
     ///
     /// - Parameter coordinate: coordinate where map will be centered
-    func centerMapOnLocationAndSearchRestaurantsNearby(coordinate: CLLocationCoordinate2D) {
+    func centerMapOnLocation(coordinate: CLLocationCoordinate2D) {
         let locationRegion = MKCoordinateRegion(center: coordinate, latitudinalMeters: regionRadius * 2.0, longitudinalMeters: regionRadius * 2.0) // * 2.0 for a Thousand meters from left and right / up and down
         
         mapView.setRegion(locationRegion, animated: true)
-        
-        searchBy(naturalLanguageQuery: "restaurant", region: locationRegion)
     }
     
     /// Search the map based on the string provided (either restaurants, gas stations and etc). In this case it is restaurants
@@ -161,6 +175,7 @@ extension MapVC: MKMapViewDelegate {
     ///   - region: the region where the query string will be searched
     func searchBy(naturalLanguageQuery: String, region: MKCoordinateRegion) {
         addProgressLabel()
+        self.restaurantsArray = [Restaurant]()
         
         let request = MKLocalSearch.Request()
         request.naturalLanguageQuery = naturalLanguageQuery
@@ -185,11 +200,14 @@ extension MapVC: MKMapViewDelegate {
                     var address = "\(placemark?.thoroughfare ?? ""), \(placemark?.locality ?? ""), \(placemark?.subLocality ?? ""), \(placemark?.administrativeArea ?? ""), \(placemark?.postalCode ?? ""), \(placemark?.country ?? "")"
                     let annotation = RestaurantAnnotation(title: restaurant.name ?? "", subtitle: address, coordinate: placemark?.coordinate ?? CLLocationCoordinate2D(), identifier: "restaurantPin")
                     self.mapView.addAnnotation(annotation)
+                    
+                    var restaurantData = Restaurant(name: restaurant.name ?? "", address: address, phoneNumber: restaurant.phoneNumber ?? "", latitude: placemark?.coordinate.latitude ?? 0.0, longitude: placemark?.coordinate.longitude ?? 0.0)
+                    
+                    self.restaurantsArray.append(restaurantData)
                 }
+                
+                self.addTableView()
             }
-            
-            
-            print("restaurants count here", restaurants?.count)
         }
     }
     
@@ -220,20 +238,26 @@ extension MapVC: MKMapViewDelegate {
     
     /// Drop a custom Pin on the map upon double clicking (objc to be used as a selector)
     @objc func dropPin(sender: UITapGestureRecognizer) {
+        removeTableView()
         removeSpinner()
         removeProgressLabel()
+        
         removePinAnnotation(completion: {
-            self.animateViewUp()
-            self.addSwipeUp()
-            self.addSwipeDown()
-            self.addSpinner()
-            
             let touchPoint = sender.location(in: mapView) //Coordinates of screen (pts)
             selectedUserCoordinate = mapView.convert(touchPoint, toCoordinateFrom: mapView) //map view coordinates
             
             let annotation = DroppablePin(coordinate: selectedUserCoordinate!, identifier: "droppablePin")
             mapView.addAnnotation(annotation)
-            centerMapOnSelectedUserLocation()
+            
+            let locationRegion = MKCoordinateRegion(center: selectedUserCoordinate!, latitudinalMeters: regionRadius * 2.0, longitudinalMeters: regionRadius * 2.0) // * 2.0 for a Thousand meters from left and right / up and down
+            
+            mapView.setRegion(locationRegion, animated: true)
+            searchBy(naturalLanguageQuery: "restaurant", region: locationRegion)
+           
+            self.animateViewUp()
+            self.addSwipeUp()
+            self.addSwipeDown()
+            self.addSpinner()
         }) //before dropping a pin annotation, remove existing annotations
     }
     
@@ -315,13 +339,11 @@ extension MapVC: MKMapViewDelegate {
             return nil
         }
         
-//        for annot in mapView.annotations {
-            if(selectedUserCoordinate != nil){
-                if(annotation.coordinate.latitude == selectedUserCoordinate?.latitude && annotation.coordinate.longitude == selectedUserCoordinate?.longitude){
-                    return nil
-                }
+        if(selectedUserCoordinate != nil){
+            if(annotation.coordinate.latitude == selectedUserCoordinate?.latitude && annotation.coordinate.longitude == selectedUserCoordinate?.longitude){
+                return nil
             }
-//        }
+        }
         
         var restoAnnotation = MKAnnotationView(annotation: annotation, reuseIdentifier: "restaurantPin")
         restoAnnotation.canShowCallout = true
@@ -329,9 +351,30 @@ extension MapVC: MKMapViewDelegate {
         
         restoAnnotation.image = restoIcon
         
-//        pinAnnotation.pinTintColor = #colorLiteral(red: 1, green: 0.5763723254, blue: 0, alpha: 1)
-        
         return restoAnnotation
+    }
+    
+    func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
+        let selectedAnnotation = view.annotation as? RestaurantAnnotation
+        let latitude = selectedAnnotation?.coordinate.latitude
+        let longitude = selectedAnnotation?.coordinate.longitude
+        for (index, restaurant) in restaurantsArray.enumerated() {
+            if restaurant.latitude == latitude && restaurant.longitude == longitude {
+                let indexPath = IndexPath(row: index, section: 0)
+                tableView?.selectRow(at: indexPath, animated: true, scrollPosition: .middle)
+            }
+        }
+    }
+    
+    @objc func zoomMapView(sender: UIPinchGestureRecognizer) {
+        if sender.scale < 1.0 {
+            //fingers closer (zoom out)
+            mapView.setZoomByDelta(delta: 2, animated: true)
+        } else if sender.scale > 1.0 {
+            //fingers apart (zoom in)
+            mapView.setZoomByDelta(delta: 0.5, animated: true)
+        }
+        
     }
 }
 
@@ -349,18 +392,48 @@ extension MapVC: CLLocationManagerDelegate {
     }
 }
 
-extension MapVC: UICollectionViewDelegate, UICollectionViewDataSource {
-    func numberOfSections(in collectionView: UICollectionView) -> Int {
-        return 1
+extension MapVC: UITableViewDelegate, UITableViewDataSource {
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return restaurantsArray.count
     }
     
-    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        //number of items in array from search by resto
-        return 3 //sample
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        let selectedRestaurant = restaurantsArray[indexPath.row]
+        let coordinate = CLLocationCoordinate2D(latitude: selectedRestaurant.latitude, longitude: selectedRestaurant.longitude)
+        centerMapOnLocation(coordinate: coordinate)
+        for annotation in mapView.annotations {
+            if(annotation.coordinate.latitude == selectedRestaurant.latitude && annotation.coordinate.longitude == selectedRestaurant.longitude){
+                //Added delay to show the tooltip at center
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { // change 0.3 to desired number of seconds
+                    self.mapView.selectAnnotation(annotation, animated: true)
+                }
+            }
+        }
     }
     
-    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "restaurantCell", for: indexPath) as? RestaurantCell
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: "restaurantCell", for: indexPath) as? RestaurantCell
+        
+        if(restaurantsArray.count > 0){
+            let restaurant = restaurantsArray[indexPath.row]
+            cell?.restoName.text = restaurant.name
+            cell?.restoAddress.text = restaurant.address
+            cell?.restoPhoneNumber.text = restaurant.phoneNumber
+        }
+        
         return cell!
+    }
+}
+
+// Added zoom functionality on mapview
+extension MKMapView {
+    func setZoomByDelta(delta: Double, animated: Bool) {
+        var _region = region;
+        var _span = region.span;
+        _span.latitudeDelta *= delta;
+        _span.longitudeDelta *= delta;
+        _region.span = _span;
+        
+        setRegion(_region, animated: animated)
     }
 }

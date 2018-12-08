@@ -19,10 +19,10 @@
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <mapView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleAspectFill" mapType="standard" zoomEnabled="NO" rotateEnabled="NO" pitchEnabled="NO" translatesAutoresizingMaskIntoConstraints="NO" id="YgH-dK-HcC">
-                                <rect key="frame" x="0.0" y="20" width="375" height="646"/>
+                                <rect key="frame" x="0.0" y="20" width="375" height="627"/>
                             </mapView>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="fxJ-Zd-TPG">
-                                <rect key="frame" x="305" y="606" width="50" height="50"/>
+                                <rect key="frame" x="305" y="587" width="50" height="50"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="50" id="21B-oX-nRl"/>
                                     <constraint firstAttribute="width" constant="50" id="Lhe-Gz-I6M"/>
@@ -53,10 +53,24 @@
                                 </constraints>
                             </view>
                             <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="5C5-68-yN3" userLabel="Pull-up View">
-                                <rect key="frame" x="0.0" y="666" width="375" height="1"/>
+                                <rect key="frame" x="0.0" y="647" width="375" height="20"/>
+                                <subviews>
+                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="─" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="J4f-Fc-fHz">
+                                        <rect key="frame" x="0.0" y="0.0" width="375" height="20"/>
+                                        <constraints>
+                                            <constraint firstAttribute="height" constant="20" id="Vgn-N5-i9j"/>
+                                        </constraints>
+                                        <fontDescription key="fontDescription" type="boldSystem" pointSize="38"/>
+                                        <nil key="textColor"/>
+                                        <nil key="highlightedColor"/>
+                                    </label>
+                                </subviews>
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <constraints>
-                                    <constraint firstAttribute="height" constant="1" id="taT-jv-iL1"/>
+                                    <constraint firstAttribute="trailing" secondItem="J4f-Fc-fHz" secondAttribute="trailing" id="Mra-WU-a8o"/>
+                                    <constraint firstAttribute="height" constant="20" id="taT-jv-iL1"/>
+                                    <constraint firstItem="J4f-Fc-fHz" firstAttribute="leading" secondItem="5C5-68-yN3" secondAttribute="leading" id="txs-Jg-GjV"/>
+                                    <constraint firstItem="J4f-Fc-fHz" firstAttribute="top" secondItem="5C5-68-yN3" secondAttribute="top" id="y2M-Q3-7lk"/>
                                 </constraints>
                             </view>
                         </subviews>
