@@ -153,6 +153,7 @@ extension MapVC: MKMapViewDelegate {
         centerMapOnLocation(coordinate: coordinate)
     }
     
+    /// Centers the map on the simulated location
     func centerMapOnSelectedUserLocation() {
         if(selectedUserCoordinate != nil){
             centerMapOnLocation(coordinate: selectedUserCoordinate!)
@@ -171,7 +172,7 @@ extension MapVC: MKMapViewDelegate {
     }
     
     /// Search the map based on the string provided (either restaurants, gas stations and etc). In this case it is restaurants
-    ///
+    /// Deprecated
     /// - Parameters:
     ///   - naturalLanguageQuery: Query string to be search (ex. restaurant)
     ///   - region: the region where the query string will be searched
@@ -221,7 +222,7 @@ extension MapVC: MKMapViewDelegate {
                 numberFormatter.numberStyle = .decimal
                 numberFormatter.maximumFractionDigits = 3
                 let centerField = "\(numberFormatter.string(for: selectedUserCoordinate?.latitude)!),\(numberFormatter.string(for: selectedUserCoordinate?.longitude)!)"
-                // adding "categories": ["FOOD_BEVERAGE"] to params causes an error, So due to this, a limit of 10000 has been added and filtered based on category_list data. then the first 9 is added to the array for display
+                // adding "categories": ["FOOD_BEVERAGE"] to params causes an error, So due to this, a limit of 10000 has been added and filtered based on category_list data. then the first 9 is added to the array for display. This is somewhat specific though as it does not include Cafes and other categories aside from 'Restaurant'
                 FBSDKGraphRequest(
                     graphPath: "search",
                     parameters: ["type":"place", "center": centerField, "distance": regionRadius*2, "fields": "name, location, single_line_address,  picture, overall_star_rating, engagement, category_list", "limit": 10000, "place_type": "FOOD_BEVERAGE"])?.start(completionHandler: { (connection, result, error) in
@@ -416,9 +417,6 @@ extension MapVC: MKMapViewDelegate {
             let rect = route.polyline.boundingMapRect
             mapView.setRegion(MKCoordinateRegion(rect), animated: true)
             topLabel.text = "Double Tap to simulate user location"
-//            for step in route.steps {
-//                print(step.instructions)
-//            }
         }
     }
     
@@ -468,6 +466,9 @@ extension MapVC: MKMapViewDelegate {
         }
     }
     
+    /// zooms the map in or out
+    ///
+    /// - Parameter sender: <#sender description#>
     @objc func zoomMapView(sender: UIPinchGestureRecognizer) {
         if sender.scale < 1.0 {
             //fingers closer (zoom out)
@@ -529,6 +530,12 @@ extension MapVC: UITableViewDelegate, UITableViewDataSource {
         return cell!
     }
     
+    
+    /// Downloads images asynchronously and saves the images to the image property inside the table row
+    ///
+    /// - Parameters:
+    ///   - url: URL
+    ///   - cell: RestaurantCell
     func downloadImage(from url: URL, cell: RestaurantCell?) {
         print("Download Started")
         getData(from: url) { data, response, error in
@@ -541,6 +548,12 @@ extension MapVC: UITableViewDelegate, UITableViewDataSource {
         }
     }
     
+    
+    /// Opens a data task to a specific url
+    ///
+    /// - Parameters:
+    ///   - url: URL
+    ///   - completion: callback function
     func getData(from url: URL, completion: @escaping (Data?, URLResponse?, Error?) -> ()) {
         URLSession.shared.dataTask(with: url, completionHandler: completion).resume()
     }
