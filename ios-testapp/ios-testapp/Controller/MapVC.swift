@@ -174,7 +174,6 @@ extension MapVC: MKMapViewDelegate {
     ///   - naturalLanguageQuery: Query string to be search (ex. restaurant)
     ///   - region: the region where the query string will be searched
     func searchBy(naturalLanguageQuery: String, region: MKCoordinateRegion) {
-        addProgressLabel()
         self.restaurantsArray = [Restaurant]()
         
         let request = MKLocalSearch.Request()
@@ -197,7 +196,8 @@ extension MapVC: MKMapViewDelegate {
             if(restaurants != nil){
                 for restaurant in restaurants! {
                     let placemark: MKPlacemark? = restaurant.placemark
-                    var address = "\(placemark?.thoroughfare ?? ""), \(placemark?.locality ?? ""), \(placemark?.subLocality ?? ""), \(placemark?.administrativeArea ?? ""), \(placemark?.postalCode ?? ""), \(placemark?.country ?? "")"
+                    var addressArray = [placemark?.thoroughfare, placemark?.subLocality, placemark?.administrativeArea, placemark?.postalCode, placemark?.country]
+                    var address = addressArray.compactMap{$0}.joined(separator: ", ")
                     let annotation = RestaurantAnnotation(title: restaurant.name ?? "", subtitle: address, coordinate: placemark?.coordinate ?? CLLocationCoordinate2D(), identifier: "restaurantPin")
                     self.mapView.addAnnotation(annotation)
                     
@@ -258,6 +258,7 @@ extension MapVC: MKMapViewDelegate {
             self.addSwipeUp()
             self.addSwipeDown()
             self.addSpinner()
+            addProgressLabel()
         }) //before dropping a pin annotation, remove existing annotations
     }
     
