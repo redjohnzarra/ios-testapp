@@ -9,6 +9,8 @@
 import UIKit
 import MapKit
 import CoreLocation
+import FBSDKCoreKit
+import FBSDKLoginKit
 
 class MapVC: UIViewController, UIGestureRecognizerDelegate {
 
@@ -201,9 +203,9 @@ extension MapVC: MKMapViewDelegate {
                     let annotation = RestaurantAnnotation(title: restaurant.name ?? "", subtitle: address, coordinate: placemark?.coordinate ?? CLLocationCoordinate2D(), identifier: "restaurantPin")
                     self.mapView.addAnnotation(annotation)
                     
-                    var restaurantData = Restaurant(name: restaurant.name ?? "", address: address, phoneNumber: restaurant.phoneNumber ?? "", latitude: placemark?.coordinate.latitude ?? 0.0, longitude: placemark?.coordinate.longitude ?? 0.0)
-                    
-                    self.restaurantsArray.append(restaurantData)
+//                    var restaurantData = Restaurant(name: restaurant.name ?? "", address: address, phoneNumber: restaurant.phoneNumber ?? "", latitude: placemark?.coordinate.latitude ?? 0.0, longitude: placemark?.coordinate.longitude ?? 0.0, likes: 0)
+//
+//                    self.restaurantsArray.append(restaurantData)
                 }
                 
                 self.addTableView()
@@ -211,6 +213,104 @@ extension MapVC: MKMapViewDelegate {
         }
     }
     
+    /// Search nearby places using facebook graph api
+    func facebookSearchPlaces() {
+        if FBSDKAccessToken.currentAccessTokenIsActive() {
+            if(selectedUserCoordinate != nil){
+                let numberFormatter = NumberFormatter()
+                numberFormatter.numberStyle = .decimal
+                numberFormatter.maximumFractionDigits = 3
+                let centerField = "\(numberFormatter.string(for: selectedUserCoordinate?.latitude)!),\(numberFormatter.string(for: selectedUserCoordinate?.longitude)!)"
+                // adding "categories": ["FOOD_BEVERAGE"] to params causes an error, So due to this, a limit of 10000 has been added and filtered based on category_list data. then the first 9 is added to the array for display
+                FBSDKGraphRequest(
+                    graphPath: "search",
+                    parameters: ["type":"place", "center": centerField, "distance": regionRadius*2, "fields": "name, location, single_line_address,  picture, overall_star_rating, engagement, category_list", "limit": 10000, "place_type": "FOOD_BEVERAGE"])?.start(completionHandler: { (connection, result, error) in
+                        if let error = error {
+                            print("Error fetching restaurants" ,error)
+                            return
+                        }
+                        
+                        self.restaurantsArray = [Restaurant]()
+
+                        if let result = result as? NSDictionary {
+                            if let allPlacesData = result["data"] as? [NSDictionary] {
+                                print("allPlacesData",allPlacesData)
+                                for data in allPlacesData {
+                                    if self.restaurantsArray.count == 9 {
+                                       break //breaks the loop if the number of restaurants reaches 9
+                                    }
+                                    let data = data as! Dictionary<String, AnyObject>
+                                    let name = data["name"] as? String
+                                    let address = data["single_line_address"] as? String
+                                    let locationData = data["location"] as? NSDictionary
+                                    let latitude = locationData?["latitude"] as? Double
+                                    let longitude = locationData?["longitude"] as? Double
+                                    let engagementData = data["engagement"] as? NSDictionary
+                                    let likes = engagementData?["count"] as? Int
+                                    
+                                    let imageObj = data["picture"] as? Dictionary<String, AnyObject>
+                                    let imageData = imageObj?["data"] as? Dictionary<String, AnyObject>
+                                    let imageURL = imageData?["url"] as? String
+                                    
+                                    let categoryListData = data["category_list"] as? [Dictionary<String, AnyObject>]
+                                    let doesContain = categoryListData?.contains {$0["name"] as? String == "Restaurant"}
+                                    
+                                    if(doesContain == true && name != nil){
+                                        let coordinate = CLLocationCoordinate2D.init(latitude: latitude ?? 0.0, longitude: longitude ?? 0.0)
+                                        let annotation = RestaurantAnnotation(title: name ?? "", subtitle: address ?? "", coordinate: coordinate ?? CLLocationCoordinate2D(), identifier: "restaurantPin")
+                                        self.mapView.addAnnotation(annotation)
+                                        
+                                        var restaurantData = Restaurant(name: name ?? "", address: address ?? "", imageURL: imageURL ?? "", latitude: latitude ?? 0.0, longitude: longitude ?? 0.0, likes: likes ?? 0)
+                                        //
+                                        self.restaurantsArray.append(restaurantData)
+                                    }else{
+                                        continue
+                                    }
+                                    
+                                    
+                                }
+                            }
+                            
+                        }
+                        
+                        if(self.restaurantsArray.count > 0){
+                            self.addTableView()
+                        } else {
+                            self.removeSpinner()
+                            self.progressLabel?.text = "No restaurants found nearby"
+                        }
+                })
+            }
+            
+        } else {
+            facebookLogin()
+        }
+    }
+    
+    /// Get facebook access token
+    func facebookLogin() {
+        let fbLoginManager : FBSDKLoginManager = FBSDKLoginManager()
+        fbLoginManager.logIn(withReadPermissions: ["email"], from: self) { (result, error) in
+            if (error == nil){
+                let fbloginresult : FBSDKLoginManagerLoginResult = result!
+                if fbloginresult.grantedPermissions != nil {
+                    if(fbloginresult.grantedPermissions.contains("email")) {
+                        if((FBSDKAccessToken.current()) != nil){
+                            FBSDKGraphRequest(graphPath: "me", parameters: ["fields": "id, name, first_name, last_name, picture.type(large), email"]).start(completionHandler: { (connection, result, error) -> Void in
+                                if (error == nil){
+//                                    self.dict = result as! [String : AnyObject]
+                                    print(result!)
+//                                    print(self.dict)
+                                }
+                            })
+                        }
+                    }
+                }
+            }else{
+                print("Error at facebook login", error)
+            }
+        }
+    }
     
     /// Draw the route of two points the source and destination
     ///
@@ -252,7 +352,8 @@ extension MapVC: MKMapViewDelegate {
             let locationRegion = MKCoordinateRegion(center: selectedUserCoordinate!, latitudinalMeters: regionRadius * 2.0, longitudinalMeters: regionRadius * 2.0) // * 2.0 for a Thousand meters from left and right / up and down
             
             mapView.setRegion(locationRegion, animated: true)
-            searchBy(naturalLanguageQuery: "restaurant", region: locationRegion)
+//            searchBy(naturalLanguageQuery: "restaurant", region: locationRegion)
+            facebookSearchPlaces()
            
             self.animateViewUp()
             self.addSwipeUp()
@@ -418,11 +519,30 @@ extension MapVC: UITableViewDelegate, UITableViewDataSource {
         if(restaurantsArray.count > 0){
             let restaurant = restaurantsArray[indexPath.row]
             cell?.restoName.text = restaurant.name
-            cell?.restoAddress.text = restaurant.address
-            cell?.restoPhoneNumber.text = restaurant.phoneNumber
+            if let url = URL(string: restaurant.imageURL) {
+                cell?.restoImage.contentMode = .scaleAspectFit
+                downloadImage(from: url, cell: cell)
+            }
+            cell?.restoLikes.text = "\(restaurant.likes) Likes"
         }
         
         return cell!
+    }
+    
+    func downloadImage(from url: URL, cell: RestaurantCell?) {
+        print("Download Started")
+        getData(from: url) { data, response, error in
+            guard let data = data, error == nil else { return }
+            print(response?.suggestedFilename ?? url.lastPathComponent)
+            print("Download Finished")
+            DispatchQueue.main.async() {
+                cell?.restoImage.image = UIImage(data: data)
+            }
+        }
+    }
+    
+    func getData(from url: URL, completion: @escaping (Data?, URLResponse?, Error?) -> ()) {
+        URLSession.shared.dataTask(with: url, completionHandler: completion).resume()
     }
 }
 

@@ -7,4 +7,7 @@ target 'ios-testapp' do
 
   # Pods for ios-testapp
   pod 'FacebookCore'
+  pod 'FBSDKCoreKit'
+  pod 'FBSDKLoginKit'
+  pod 'Alamofire'
 end

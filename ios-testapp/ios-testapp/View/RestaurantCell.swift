@@ -11,35 +11,30 @@ import UIKit
 class RestaurantCell: UITableViewCell {
     let restoImage = UIImageView()
     let restoName = UILabel()
-    let restoAddress = UILabel()
-    let restoPhoneNumber = UILabel()
+    let restoLikes = UILabel()
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
-        restoImage.backgroundColor = UIColor.blue
-        
+//        restoImage.backgroundColor = UIColor.blue
         restoImage.translatesAutoresizingMaskIntoConstraints = false
         restoName.translatesAutoresizingMaskIntoConstraints = false
-        restoAddress.translatesAutoresizingMaskIntoConstraints = false
-        restoPhoneNumber.translatesAutoresizingMaskIntoConstraints = false
+        restoLikes.translatesAutoresizingMaskIntoConstraints = false
         
         contentView.addSubview(restoImage)
         contentView.addSubview(restoName)
-        contentView.addSubview(restoAddress)
-        contentView.addSubview(restoPhoneNumber)
+        contentView.addSubview(restoLikes)
         
         let viewsDict = [
             "image" : restoImage,
             "name" : restoName,
-            "address" : restoAddress,
-            "restoPhoneNumber" : restoPhoneNumber,
+            "likes" : restoLikes
             ]
         
-        contentView.addConstraints(NSLayoutConstraint.constraints(withVisualFormat: "V:|-[image(10)]", options: [], metrics: nil, views: viewsDict))
-        contentView.addConstraints(NSLayoutConstraint.constraints(withVisualFormat: "V:[restoPhoneNumber]-|", options: [], metrics: nil, views: viewsDict))
-        contentView.addConstraints(NSLayoutConstraint.constraints(withVisualFormat: "V:|-[name]-[address]-|", options: [], metrics: nil, views: viewsDict))
-        contentView.addConstraints(NSLayoutConstraint.constraints(withVisualFormat: "H:|-[name]-[image(10)]-|", options: [], metrics: nil, views: viewsDict))
-        contentView.addConstraints(NSLayoutConstraint.constraints(withVisualFormat: "H:|-[address]-[restoPhoneNumber]-|", options: [], metrics: nil, views: viewsDict))
+        contentView.addConstraints(NSLayoutConstraint.constraints(withVisualFormat: "V:|-[image(50)]", options: [], metrics: nil, views: viewsDict))
+//        contentView.addConstraints(NSLayoutConstraint.constraints(withVisualFormat: "V:[restoPhoneNumber]-|", options: [], metrics: nil, views: viewsDict))
+        contentView.addConstraints(NSLayoutConstraint.constraints(withVisualFormat: "V:|-[name]-[likes]-|", options: [], metrics: nil, views: viewsDict))
+        contentView.addConstraints(NSLayoutConstraint.constraints(withVisualFormat: "H:|-[name]-[image(50)]-|", options: [], metrics: nil, views: viewsDict))
+        contentView.addConstraints(NSLayoutConstraint.constraints(withVisualFormat: "H:|-[likes]-|", options: [], metrics: nil, views: viewsDict))
     }
     
     required init?(coder aDecoder: NSCoder) {
