@@ -45,5 +45,18 @@
 	<string></string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string></string>
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>fb381043265966445</string>
+            </array>
+        </dict>
+    </array>
+    <key>FacebookAppID</key>
+    <string>381043265966445</string>
+    <key>FacebookDisplayName</key>
+    <string>TestIOS</string>
 </dict>
 </plist>
