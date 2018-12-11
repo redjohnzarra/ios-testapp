@@ -497,12 +497,11 @@ extension MapVC: MKMapViewDelegate {
     @objc func zoomMapView(sender: UIPinchGestureRecognizer) {
         if sender.scale < 1.0 {
             //fingers closer (zoom out)
-            mapView.setZoomByDelta(delta: 2, animated: true)
+            mapView.setZoomByDelta(delta: Double(sender.scale * 5), animated: true)
         } else if sender.scale > 1.0 {
             //fingers apart (zoom in)
-            mapView.setZoomByDelta(delta: 0.5, animated: true)
+            mapView.setZoomByDelta(delta: 0.1, animated: true)
         }
-        
     }
 }
 
