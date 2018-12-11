@@ -9,5 +9,4 @@ target 'ios-testapp' do
   pod 'FacebookCore'
   pod 'FBSDKCoreKit'
   pod 'FBSDKLoginKit'
-  pod 'Alamofire'
 end

@@ -46,6 +46,8 @@ class MapVC: UIViewController, UIGestureRecognizerDelegate {
         drawFromAndToRoute(from: "Narva, Estonia", to: "Tallinn, Estonia") //Draws the route from Narva, Estonia to Tallinn, Estonia when app has been loaded
     }
     
+    
+    /// Adds pinch gesture recognizer to mapview
     func addPinch() {
         let pinch = UIPinchGestureRecognizer(target: self, action: #selector(zoomMapView(sender:)))
         pinch.delegate = self
@@ -62,12 +64,15 @@ class MapVC: UIViewController, UIGestureRecognizerDelegate {
         mapView.addGestureRecognizer(doubleTap)
     }
     
+    /// Adds swipe up gesture recognizer to pull up view, to maximize the view and show the table list for restaurant
     func addSwipeUp() {
         let swipeUp = UISwipeGestureRecognizer(target: self, action: #selector(animateViewUp))
         swipeUp.direction = .up
         pullUpView.addGestureRecognizer(swipeUp)
     }
     
+    
+    /// Adds swipe down gesture to pull up view, minimizes the view
     func addSwipeDown() {
         let swipeDown = UISwipeGestureRecognizer(target: self, action: #selector(animateViewDown))
         swipeDown.direction = .down
@@ -100,12 +105,14 @@ class MapVC: UIViewController, UIGestureRecognizerDelegate {
         pullUpView.addSubview(spinner!)
     }
     
+    /// Removes the spinner on pull-up view
     func removeSpinner() {
         if spinner != nil {
             spinner?.removeFromSuperview()
         }
     }
     
+    /// Adds a progress label to pull up view.
     func addProgressLabel() {
         progressLabel = UILabel()
         progressLabel?.frame = CGRect(x: (screenSize.width / 2) - 100, y: (pullUpView.frame.height / 2) + 25, width: 200, height: 40)
@@ -116,12 +123,14 @@ class MapVC: UIViewController, UIGestureRecognizerDelegate {
         pullUpView.addSubview(progressLabel!)
     }
     
+    /// Removes the progress label from pull up view
     func removeProgressLabel() {
         if progressLabel != nil {
             progressLabel?.removeFromSuperview()
         }
     }
     
+    /// Adds table view to pull up view.
     func addTableView() {
         tableView = UITableView(frame: CGRect(x: 0, y: 20, width: pullUpView.frame.width, height: pullUpView.frame.height - 20))
         tableView?.register(RestaurantCell.self, forCellReuseIdentifier: "restaurantCell")
@@ -131,15 +140,19 @@ class MapVC: UIViewController, UIGestureRecognizerDelegate {
         pullUpView.addSubview(tableView!)
     }
     
+    /// Removes table view from pull up view
     func removeTableView() {
         if tableView != nil {
             tableView?.removeFromSuperview()
         }
     }
     
+    /// action that centers the map view to the selected location.
+    ///
+    /// - Parameter sender: Any
     @IBAction func centerMapBtnPressed(_ sender: Any) {
         if(authorizationStatus == .authorizedAlways || authorizationStatus == .authorizedWhenInUse){
-//            centerMapOnUserLocation()
+//            centerMapOnUserLocation() //commented centering on user location
             centerMapOnSelectedUserLocation()
         }
     }
@@ -186,7 +199,6 @@ extension MapVC: MKMapViewDelegate {
         let search = MKLocalSearch(request: request)
         search.start { response, error in
             guard let response = response else {
-                print("Error on searching \(naturalLanguageQuery)", error)
                 return
             }
             var restaurants: [MKMapItem]? = nil
@@ -199,8 +211,8 @@ extension MapVC: MKMapViewDelegate {
             if(restaurants != nil){
                 for restaurant in restaurants! {
                     let placemark: MKPlacemark? = restaurant.placemark
-                    var addressArray = [placemark?.thoroughfare, placemark?.subLocality, placemark?.administrativeArea, placemark?.postalCode, placemark?.country]
-                    var address = addressArray.compactMap{$0}.joined(separator: ", ")
+                    let addressArray = [placemark?.thoroughfare, placemark?.subLocality, placemark?.administrativeArea, placemark?.postalCode, placemark?.country]
+                    let address = addressArray.compactMap{$0}.joined(separator: ", ")
                     let annotation = RestaurantAnnotation(title: restaurant.name ?? "", subtitle: address, coordinate: placemark?.coordinate ?? CLLocationCoordinate2D(), identifier: "restaurantPin")
                     self.mapView.addAnnotation(annotation)
                     
@@ -256,19 +268,18 @@ extension MapVC: MKMapViewDelegate {
                                     let categoryListData = data["category_list"] as? [Dictionary<String, AnyObject>]
                                     let doesContain = categoryListData?.contains {$0["name"] as? String == "Restaurant"}
                                     
+                                    //Checks if the category list array of objects contains a name with Restaurant as value. If yes, adds it to the restaurants array for display at table view, if not, continues the loop
                                     if(doesContain == true && name != nil){
                                         let coordinate = CLLocationCoordinate2D.init(latitude: latitude ?? 0.0, longitude: longitude ?? 0.0)
-                                        let annotation = RestaurantAnnotation(title: name ?? "", subtitle: address ?? "", coordinate: coordinate ?? CLLocationCoordinate2D(), identifier: "restaurantPin")
+                                        let annotation = RestaurantAnnotation(title: name ?? "", subtitle: address ?? "", coordinate: coordinate, identifier: "restaurantPin")
                                         self.mapView.addAnnotation(annotation)
                                         
-                                        var restaurantData = Restaurant(name: name ?? "", address: address ?? "", imageURL: imageURL ?? "", latitude: latitude ?? 0.0, longitude: longitude ?? 0.0, likes: likes ?? 0)
+                                        let restaurantData = Restaurant(name: name ?? "", address: address ?? "", imageURL: imageURL ?? "", latitude: latitude ?? 0.0, longitude: longitude ?? 0.0, likes: likes ?? 0)
                                         //
                                         self.restaurantsArray.append(restaurantData)
                                     }else{
                                         continue
                                     }
-                                    
-                                    
                                 }
                             }
                             
@@ -297,13 +308,7 @@ extension MapVC: MKMapViewDelegate {
                 if fbloginresult.grantedPermissions != nil {
                     if(fbloginresult.grantedPermissions.contains("email")) {
                         if((FBSDKAccessToken.current()) != nil){
-                            FBSDKGraphRequest(graphPath: "me", parameters: ["fields": "id, name, first_name, last_name, picture.type(large), email"]).start(completionHandler: { (connection, result, error) -> Void in
-                                if (error == nil){
-//                                    self.dict = result as! [String : AnyObject]
-                                    print(result!)
-//                                    print(self.dict)
-                                }
-                            })
+                            self.facebookSearchPlaces()
                         }
                     }
                 }
@@ -343,6 +348,7 @@ extension MapVC: MKMapViewDelegate {
         removeSpinner()
         removeProgressLabel()
         
+        //Clears the previously created annotations first from the map before adding a new one.
         removePinAnnotation(completion: {
             let touchPoint = sender.location(in: mapView) //Coordinates of screen (pts)
             selectedUserCoordinate = mapView.convert(touchPoint, toCoordinateFrom: mapView) //map view coordinates
@@ -435,17 +441,19 @@ extension MapVC: MKMapViewDelegate {
     }
     
     func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
+        //If the annotation is the user location (not used), do not alter the annotation view
         if(annotation is MKUserLocation) {
             return nil
         }
         
+        //If the annotation is the currently selected one, do not alter the annotation view
         if(selectedUserCoordinate != nil){
             if(annotation.coordinate.latitude == selectedUserCoordinate?.latitude && annotation.coordinate.longitude == selectedUserCoordinate?.longitude){
                 return nil
             }
         }
         
-        var restoAnnotation = MKAnnotationView(annotation: annotation, reuseIdentifier: "restaurantPin")
+        let restoAnnotation = MKAnnotationView(annotation: annotation, reuseIdentifier: "restaurantPin")
         restoAnnotation.canShowCallout = true
         let restoIcon = UIImage(named: "restoIcon")
         
@@ -454,6 +462,7 @@ extension MapVC: MKMapViewDelegate {
         return restoAnnotation
     }
     
+    /// Function that is called when an annotation is clicked.
     func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
         let selectedAnnotation = view.annotation as? RestaurantAnnotation
         let latitude = selectedAnnotation?.coordinate.latitude
@@ -461,6 +470,7 @@ extension MapVC: MKMapViewDelegate {
         for (index, restaurant) in restaurantsArray.enumerated() {
             if restaurant.latitude == latitude && restaurant.longitude == longitude {
                 let indexPath = IndexPath(row: index, section: 0)
+                //Focuses the table row which is the selected annotation
                 tableView?.selectRow(at: indexPath, animated: true, scrollPosition: .middle)
             }
         }
@@ -482,6 +492,7 @@ extension MapVC: MKMapViewDelegate {
 }
 
 extension MapVC: CLLocationManagerDelegate {
+    //Requests authorization to allow the use of user location (not used)
     func configureLocationServices() {
         if authorizationStatus == .notDetermined {
             locationManager.requestAlwaysAuthorization()
@@ -500,12 +511,14 @@ extension MapVC: UITableViewDelegate, UITableViewDataSource {
         return restaurantsArray.count
     }
     
+    ///Function that is called upon clicking a table row.
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         let selectedRestaurant = restaurantsArray[indexPath.row]
         let coordinate = CLLocationCoordinate2D(latitude: selectedRestaurant.latitude, longitude: selectedRestaurant.longitude)
         centerMapOnLocation(coordinate: coordinate)
         for annotation in mapView.annotations {
             if(annotation.coordinate.latitude == selectedRestaurant.latitude && annotation.coordinate.longitude == selectedRestaurant.longitude){
+                //Focuses on the annotation for the specific table row selected
                 //Added delay to show the tooltip at center
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { // change 0.3 to desired number of seconds
                     self.mapView.selectAnnotation(annotation, animated: true)
@@ -516,7 +529,7 @@ extension MapVC: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "restaurantCell", for: indexPath) as? RestaurantCell
-        
+        //Sets the data for each row cell based on the list of restaurants fetched from maps / facebook
         if(restaurantsArray.count > 0){
             let restaurant = restaurantsArray[indexPath.row]
             cell?.restoName.text = restaurant.name
