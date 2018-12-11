@@ -235,9 +235,10 @@ extension MapVC: MKMapViewDelegate {
                 numberFormatter.maximumFractionDigits = 3
                 let centerField = "\(numberFormatter.string(for: selectedUserCoordinate?.latitude)!),\(numberFormatter.string(for: selectedUserCoordinate?.longitude)!)"
                 // adding "categories": ["FOOD_BEVERAGE"] to params causes an error, So due to this, a limit of 10000 has been added and filtered based on category_list data. then the first 9 is added to the array for display. This is somewhat specific though as it does not include Cafes and other categories aside from 'Restaurant'
+                
                 FBSDKGraphRequest(
                     graphPath: "search",
-                    parameters: ["type":"place", "center": centerField, "distance": regionRadius*2, "fields": "name, location, single_line_address,  picture, overall_star_rating, engagement, category_list", "limit": 10000, "place_type": "FOOD_BEVERAGE"])?.start(completionHandler: { (connection, result, error) in
+                    parameters: ["type":"place", "center": centerField, "distance": regionRadius*2, "fields": "name, location, single_line_address,  picture, overall_star_rating, engagement, category_list", "limit": 10000])?.start(completionHandler: { (connection, result, error) in
                         if let error = error {
                             print("Error fetching restaurants" ,error)
                             return
