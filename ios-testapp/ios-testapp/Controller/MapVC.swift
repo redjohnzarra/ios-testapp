@@ -255,12 +255,19 @@ extension MapVC: MKMapViewDelegate {
                                     }
                                     let data = data as! Dictionary<String, AnyObject>
                                     let name = data["name"] as? String
-                                    let address = data["single_line_address"] as? String
+                                    var addressString = ""
+                                    if let address = data["single_line_address"] as? String {
+                                        addressString = address
+                                    }
                                     let locationData = data["location"] as? NSDictionary
                                     let latitude = locationData?["latitude"] as? Double
                                     let longitude = locationData?["longitude"] as? Double
                                     let engagementData = data["engagement"] as? NSDictionary
                                     let likes = engagementData?["count"] as? Int
+                                    var socialSentenceCount = ""
+                                    if let socialSentence = engagementData?["social_sentence"] as? String {
+                                        socialSentenceCount = socialSentence
+                                    }
                                     
                                     let imageObj = data["picture"] as? Dictionary<String, AnyObject>
                                     let imageData = imageObj?["data"] as? Dictionary<String, AnyObject>
@@ -269,13 +276,15 @@ extension MapVC: MKMapViewDelegate {
                                     let categoryListData = data["category_list"] as? [Dictionary<String, AnyObject>]
                                     let doesContain = categoryListData?.contains {$0["name"] as? String == "Restaurant"}
                                     
+                                    let subtitle = "\(addressString)\n(\(socialSentenceCount))"
+                                    
                                     //Checks if the category list array of objects contains a name with Restaurant as value. If yes, adds it to the restaurants array for display at table view, if not, continues the loop
                                     if(doesContain == true && name != nil){
                                         let coordinate = CLLocationCoordinate2D.init(latitude: latitude ?? 0.0, longitude: longitude ?? 0.0)
-                                        let annotation = RestaurantAnnotation(title: name ?? "", subtitle: address ?? "", coordinate: coordinate, identifier: "restaurantPin")
+                                        let annotation = RestaurantAnnotation(title: name ?? "", subtitle: subtitle, coordinate: coordinate, identifier: "restaurantPin")
                                         self.mapView.addAnnotation(annotation)
                                         
-                                        let restaurantData = Restaurant(name: name ?? "", address: address ?? "", imageURL: imageURL ?? "", latitude: latitude ?? 0.0, longitude: longitude ?? 0.0, likes: likes ?? 0)
+                                        let restaurantData = Restaurant(name: name ?? "", address: addressString, imageURL: imageURL ?? "", latitude: latitude ?? 0.0, longitude: longitude ?? 0.0, likes: likes ?? 0)
                                         //
                                         self.restaurantsArray.append(restaurantData)
                                     }else{
@@ -457,8 +466,13 @@ extension MapVC: MKMapViewDelegate {
         let restoAnnotation = MKAnnotationView(annotation: annotation, reuseIdentifier: "restaurantPin")
         restoAnnotation.canShowCallout = true
         let restoIcon = UIImage(named: "restoIcon")
-        
         restoAnnotation.image = restoIcon
+        //Adds subtitle view to make it not truncated
+        let subtitleView = UILabel()
+        subtitleView.font = subtitleView.font.withSize(12)
+        subtitleView.numberOfLines = 0
+        subtitleView.text = annotation.subtitle!
+        restoAnnotation.detailCalloutAccessoryView = subtitleView
         
         return restoAnnotation
     }
