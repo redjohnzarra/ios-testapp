@@ -276,7 +276,7 @@ extension MapVC: MKMapViewDelegate {
                                     let categoryListData = data["category_list"] as? [Dictionary<String, AnyObject>]
                                     let doesContain = categoryListData?.contains {$0["name"] as? String == "Restaurant"}
                                     
-                                    let subtitle = "\(addressString)\n(\(socialSentenceCount))"
+                                    let subtitle = "\(addressString)\n\(socialSentenceCount)"
                                     
                                     //Checks if the category list array of objects contains a name with Restaurant as value. If yes, adds it to the restaurants array for display at table view, if not, continues the loop
                                     if(doesContain == true && name != nil){
