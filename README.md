@@ -1,4 +1,4 @@
-Shops App using React Native and GraphCool
+Test App using Swift
 ==========================================
 
 How to use:
